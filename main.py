@@ -28,6 +28,8 @@ class Player:
     GRAVITY = 0
     JUMP_VELOCITY = 15
     ASSETS_FOLDER = "./Assets/Player"
+    ALIVE = True
+    SCORE = 0
 
     # Player Assets
 
@@ -35,11 +37,12 @@ class Player:
 
     run_state = 0
 
-    def __init__(self, x, y, obstacle_handler):
+    def __init__(self, x, y, obstacle_handler, start_tick):
         self.x = x
         self.y = y
         self.GROUND_HEIGHT = y
         self.obstacle_handler = obstacle_handler
+        self.START_TICK = start_tick
 
         # Load character sprites from ASSETS folder
         for file in sorted(os.listdir(os.path.abspath(self.ASSETS_FOLDER))):
@@ -74,17 +77,22 @@ class Player:
         return self.get_draw().get_rect(midbottom=(self.x, self.y))
 
     def tick(self):
-        self.run_state += 6
-        self.GRAVITY += 1
-        self.y += self.GRAVITY
-        if self.y > self.GROUND_HEIGHT:
-            self.y = self.GROUND_HEIGHT
+        if self.ALIVE:
+            self.run_state += 6
+            self.GRAVITY += 1
+            self.y += self.GRAVITY
+            if self.y > self.GROUND_HEIGHT:
+                self.y = self.GROUND_HEIGHT
+            self.SCORE = int((pygame.time.get_ticks() - self.START_TICK) / 100)
 
     def onGround(self):
         if self.y == self.GROUND_HEIGHT:
             return True
         if self.y > self.GROUND_HEIGHT:
             return False
+
+    def kill(self):
+        self.ALIVE = False
 
 
 class ObstacleHandler:
@@ -142,11 +150,12 @@ class ObstacleHandler:
 # Assets
 ground = pygame.image.load("Assets/ground.png")
 sky = pygame.transform.scale(pygame.image.load("Assets/sky.webp"), (800, 400))
+font = pygame.font.Font(None, 30)
 
 
 GROUND_HEIGHT = 330
 obstacle = ObstacleHandler()
-character = Player(80, GROUND_HEIGHT + 20, obstacle)
+character = Player(80, GROUND_HEIGHT + 20, obstacle, pygame.time.get_ticks())
 obstacle.set_jump_velocity(character.JUMP_VELOCITY, character.GRAVITY)
 
 
@@ -165,6 +174,8 @@ while run:
     screen.blit(ground, (0, GROUND_HEIGHT))
     character.tick()
     screen.blit(character.get_draw(), character.get_position())
+    score_rect = font.render(f"Score: {character.SCORE}", False, "Red")
+    screen.blit(score_rect, score_rect.get_rect(topright=(WIDTH - 10, 10)))
     obstacle.tick(screen)
     pygame.display.update()
 
