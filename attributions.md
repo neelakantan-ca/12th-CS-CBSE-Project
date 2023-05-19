@@ -1,0 +1,2 @@
+- Character Model: https://opengameart.org/content/simple-platformer-character
+- Background: https://opengameart.org/content/several-scrolling-backgrounds-and-layerable-runners
