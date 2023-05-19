@@ -33,8 +33,8 @@ class Player(pygame.sprite.Sprite):
     TIME_OF_JUMP = math.sqrt((2 * JUMP_HEIGHT) / GRAVITY)
     JUMP_VELOCITY = GRAVITY * TIME_OF_JUMP
     ASSETS_FOLDER = "./Assets/Player"
-    ANIMATION_SPEED = 0.1
-    PLAYER_SCALE = 0.7
+    ANIMATION_SPEED = 0.15
+    PLAYER_SCALE = 1.7
 
     # Player Assets
 
@@ -56,7 +56,7 @@ class Player(pygame.sprite.Sprite):
         run_assets_files = sorted(os.listdir(run_assets_path))
         for file in run_assets_files:
             file_path = os.path.join(run_assets_path, file)
-            if os.path.isfile(file_path):
+            if os.path.isfile(file_path) and file_path.endswith(".png"):
                 # Load and Scale Sprite
                 img = pygame.transform.scale_by(
                     pygame.image.load(file_path).convert_alpha(),
