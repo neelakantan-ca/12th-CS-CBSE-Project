@@ -148,6 +148,8 @@ class ObstacleHandler:
     ASSETS_FOLDER = "./Assets/Obstacles"
     OBSTACLE_SPAWN_X = 900
     OBSTACLE_SPEED = 3
+    OFFSET = 50
+    OBSTACLE_SPAWN_PERCENTAGE = 0.97
 
     def __init__(self):
         for file in sorted(os.listdir(os.path.abspath(self.ASSETS_FOLDER))):
@@ -160,14 +162,30 @@ class ObstacleHandler:
         self.obstacles = pygame.sprite.Group()
 
     def generate(self):
-        self.obstacles.add(
-            Obstacle(
-                random.choice(self.sprites),
-                self.OBSTACLE_SPAWN_X,
-                GROUND_HEIGHT + 20,
-                self.OBSTACLE_SPEED,
+        if random.random() < self.OBSTACLE_SPAWN_PERCENTAGE:
+            return
+        air_time = Player.TIME_OF_JUMP
+        furthest_distance = 0
+        for obstacle in self.obstacles.sprites():
+            furthest_distance = (
+                obstacle.x
+                if furthest_distance < obstacle.x
+                else furthest_distance
             )
+        obstacle = random.choice(self.sprites)
+        gap_between_obstacles = self.OBSTACLE_SPAWN_X - furthest_distance
+        distance_travelled_in_air = (
+            air_time * self.OBSTACLE_SPEED + obstacle.get_width()
         )
+        if gap_between_obstacles > distance_travelled_in_air + self.OFFSET:
+            self.obstacles.add(
+                Obstacle(
+                    obstacle,
+                    self.OBSTACLE_SPAWN_X,
+                    GROUND_HEIGHT + 20,
+                    self.OBSTACLE_SPEED,
+                )
+            )
 
 
 # Assets
@@ -193,14 +211,12 @@ while run:
         if event.type == pygame.QUIT:
             run = False
             exit()
-        elif event.type == pygame.KEYDOWN:
-            if pygame.key.get_pressed()[pygame.K_UP]:
-                obstacleHandler.generate()
 
     screen.blit(sky, (0, 0))
     # screen.blit(ground, (0, GROUND_HEIGHT))
     characterGroup.draw(screen)
     characterGroup.update()
+    obstacleHandler.generate()
     obstacleHandler.obstacles.draw(screen)
     obstacleHandler.obstacles.update()
     # lowest = player.position.y if player.position.y > lowest else lowest
