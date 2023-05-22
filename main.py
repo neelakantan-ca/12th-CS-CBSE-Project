@@ -92,6 +92,7 @@ class Player(pygame.sprite.Sprite):
     _run_sprites = []
     _animation_state = 0
     _is_alive = True
+
     score = 0
 
     def __init__(self, x: int, y: int, start_tick: int) -> None:
