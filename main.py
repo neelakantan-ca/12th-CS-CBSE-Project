@@ -27,7 +27,7 @@ pygame.key.set_repeat(100)
 
 
 class Player(pygame.sprite.Sprite):
-    JUMP_HEIGHT = 150
+    JUMP_HEIGHT = 125
     GRAVITY = 0.7
     TIME_OF_JUMP = math.sqrt((2 * JUMP_HEIGHT) / GRAVITY)
     JUMP_VELOCITY = GRAVITY * TIME_OF_JUMP
@@ -55,13 +55,14 @@ class Player(pygame.sprite.Sprite):
         run_assets_files = sorted(os.listdir(run_assets_path))
         for file in run_assets_files:
             file_path = os.path.join(run_assets_path, file)
-            if os.path.isfile(file_path) and file_path.endswith(".png"):
-                # Load and Scale Sprite
-                img = pygame.transform.scale_by(
-                    pygame.image.load(file_path).convert_alpha(),
-                    self.PLAYER_SCALE,
-                )
-                self.run_sprites.append(img)
+            if not (os.path.isfile(file_path) and file_path.endswith(".png")):
+                continue
+            # Load and Scale Sprite
+            img = pygame.transform.scale_by(
+                pygame.image.load(file_path).convert_alpha(),
+                self.PLAYER_SCALE,
+            )
+            self.run_sprites.append(img)
 
         self.position = pygame.math.Vector2(x, y)
         self.acceleration = pygame.math.Vector2(0, 0)
@@ -72,31 +73,31 @@ class Player(pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect(midbottom=(x, y))
 
-    def onGround(self) -> bool:
+    def on_ground(self) -> bool:
         if self.position.y >= self.GROUND_HEIGHT:
             return True
         return False
 
     def jump(self) -> None:
-        if self.onGround():
+        if self.on_ground():
             self.velocity.y = -self.JUMP_VELOCITY
             self.acceleration.y = self.GRAVITY
 
-    def handleInput(self) -> None:
+    def handle_input(self) -> None:
         pressedKeys = pygame.key.get_pressed()
         if pressedKeys[pygame.K_SPACE]:
             self.jump()
 
-    def setPosition(self) -> None:
+    def set_position(self) -> None:
         self.rect = self.image.get_rect(
             midbottom=(self.position.x, self.position.y)
         )
 
-    def gameOver(self) -> None:
+    def game_over(self) -> None:
         self.player_alive = False
 
-    def animationState(self) -> None:
-        if not self.onGround():
+    def update_animation_state(self) -> None:
+        if not self.on_ground():
             self.animation_state = 0
             self.image = self.jump_sprite
             return
@@ -114,16 +115,16 @@ class Player(pygame.sprite.Sprite):
             self.velocity.y = 0
             self.position.y = self.GROUND_HEIGHT
 
-    def calculateScore(self) -> None:
+    def calculate_score(self) -> None:
         self.score = int((pygame.time.get_ticks() - self.START_TICK) / 100)
 
     def update(self, *args: Any, **kwargs: Any) -> None:
         if self.player_alive:
-            self.animationState()
+            self.update_animation_state()
             self.move()
-            self.handleInput()
-            self.setPosition()
-            self.calculateScore()
+            self.handle_input()
+            self.set_position()
+            self.calculate_score()
         return super().update(*args, **kwargs)
 
 
@@ -158,15 +159,16 @@ class ObstacleHandler:
     def __init__(self, ground_height):
         for file in sorted(os.listdir(os.path.abspath(self.ASSETS_FOLDER))):
             file_path = os.path.join(self.ASSETS_FOLDER, file)
-            if os.path.isfile(file_path):
-                img = pygame.transform.scale_by(
-                    pygame.image.load(file_path).convert_alpha(), 0.7
-                )
-                self.sprites.append(img)
+            if not (os.path.isfile(file_path) and file_path.endswith(".png")):
+                continue
+            img = pygame.transform.scale_by(
+                pygame.image.load(file_path).convert_alpha(), 0.2
+            )
+            self.sprites.append(img)
         self.obstacles = pygame.sprite.Group()
         self.GROUND_HEIGHT = ground_height
 
-    def generate(self):
+    def generate(self) -> None:
         if random.random() < self.OBSTACLE_SPAWN_PERCENTAGE:
             return
         air_time = Player.TIME_OF_JUMP
@@ -182,15 +184,18 @@ class ObstacleHandler:
         distance_travelled_in_air = (
             air_time * self.OBSTACLE_SPEED + obstacle.get_width()
         )
-        if gap_between_obstacles > distance_travelled_in_air + self.OFFSET:
-            self.obstacles.add(
-                Obstacle(
-                    obstacle,
-                    self.OBSTACLE_SPAWN_X,
-                    self.GROUND_HEIGHT + 20,
-                    self.OBSTACLE_SPEED,
-                )
+        if not (
+            gap_between_obstacles > distance_travelled_in_air + self.OFFSET
+        ):
+            return
+        self.obstacles.add(
+            Obstacle(
+                obstacle,
+                self.OBSTACLE_SPAWN_X,
+                self.GROUND_HEIGHT + 20,
+                self.OBSTACLE_SPEED,
             )
+        )
 
 
 class Game:
@@ -225,24 +230,25 @@ class Game:
                 False,
                 pygame.sprite.collide_mask,  # type: ignore
             ):
-                self.player.gameOver()
+                self.player.game_over()
 
             screen.blit(sky, (0, 0))
 
-            if self.player.player_alive:
-                self.characterGroup.draw(screen)
-                self.characterGroup.update()
-                self.obstacleHandler.generate()
-                self.obstacleHandler.obstacles.draw(screen)
-                self.obstacleHandler.obstacles.update()
-                score_rect = font.render(
-                    f"Score: {self.player.score}",
-                    False,
-                    "Red",
-                )
-                screen.blit(
-                    score_rect, score_rect.get_rect(topright=(WIDTH - 10, 10))
-                )
+            if not (self.player.player_alive):
+                break
+            self.characterGroup.draw(screen)
+            self.characterGroup.update()
+            self.obstacleHandler.generate()
+            self.obstacleHandler.obstacles.draw(screen)
+            self.obstacleHandler.obstacles.update()
+            score_rect = font.render(
+                f"Score: {self.player.score}",
+                False,
+                "Red",
+            )
+            screen.blit(
+                score_rect, score_rect.get_rect(topright=(WIDTH - 10, 10))
+            )
             # obstacle.tick(screen)
             pygame.display.update()
         return self.player.score
