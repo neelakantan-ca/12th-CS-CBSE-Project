@@ -70,6 +70,7 @@ class Player(pygame.sprite.Sprite):
         self.GROUND_HEIGHT = y
         self.START_TICK = start_tick
         self.image = self.jump_sprite
+        self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect(midbottom=(x, y))
 
     def onGround(self) -> bool:
@@ -91,6 +92,9 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(
             midbottom=(self.position.x, self.position.y)
         )
+
+    def gameOver(self) -> None:
+        self.player_alive = False
 
     def animationState(self) -> None:
         if not self.onGround():
@@ -132,6 +136,7 @@ class Obstacle(pygame.sprite.Sprite):
         self.x = x
         self.y = y
         self.speed = speed
+        self.mask = pygame.mask.from_surface(self.image)
         self.rect = img.get_rect(midbottom=(x, y))
         super().__init__()
 
@@ -212,21 +217,26 @@ while run:
             run = False
             exit()
 
-    screen.blit(sky, (0, 0))
-    # screen.blit(ground, (0, GROUND_HEIGHT))
-    characterGroup.draw(screen)
-    characterGroup.update()
-    obstacleHandler.generate()
-    obstacleHandler.obstacles.draw(screen)
-    obstacleHandler.obstacles.update()
-    # lowest = player.position.y if player.position.y > lowest else lowest
-    # highest = player.position.y if player.position.y < highest else highest
-    score_rect = font.render(
-        f"Score: {player.score}",
-        False,
-        "Red",
-    )
-    screen.blit(score_rect, score_rect.get_rect(topright=(WIDTH - 10, 10)))
+    if pygame.sprite.spritecollide(
+        player, obstacleHandler.obstacles, False, pygame.sprite.collide_mask
+    ):
+        player.gameOver()
+    if player.player_alive:
+        screen.blit(sky, (0, 0))
+        # screen.blit(ground, (0, GROUND_HEIGHT))
+        characterGroup.draw(screen)
+        characterGroup.update()
+        obstacleHandler.generate()
+        obstacleHandler.obstacles.draw(screen)
+        obstacleHandler.obstacles.update()
+        # lowest = player.position.y if player.position.y > lowest else lowest
+        # highest = player.position.y if player.position.y < highest else highest
+        score_rect = font.render(
+            f"Score: {player.score}",
+            False,
+            "Red",
+        )
+        screen.blit(score_rect, score_rect.get_rect(topright=(WIDTH - 10, 10)))
     # obstacle.tick(screen)
     pygame.display.update()
 
