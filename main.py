@@ -230,7 +230,6 @@ class Game:
             screen.blit(sky, (0, 0))
 
             if self.player.player_alive:
-                # screen.blit(ground, (0, GROUND_HEIGHT))
                 self.characterGroup.draw(screen)
                 self.characterGroup.update()
                 self.obstacleHandler.generate()
