@@ -1,7 +1,6 @@
 from typing import Any
 import pygame
 import math
-from sys import exit
 import os
 import random
 
@@ -156,7 +155,7 @@ class ObstacleHandler:
     OFFSET = 50
     OBSTACLE_SPAWN_PERCENTAGE = 0.97
 
-    def __init__(self):
+    def __init__(self, ground_height):
         for file in sorted(os.listdir(os.path.abspath(self.ASSETS_FOLDER))):
             file_path = os.path.join(self.ASSETS_FOLDER, file)
             if os.path.isfile(file_path):
@@ -165,6 +164,7 @@ class ObstacleHandler:
                 )
                 self.sprites.append(img)
         self.obstacles = pygame.sprite.Group()
+        self.GROUND_HEIGHT = ground_height
 
     def generate(self):
         if random.random() < self.OBSTACLE_SPAWN_PERCENTAGE:
@@ -187,10 +187,66 @@ class ObstacleHandler:
                 Obstacle(
                     obstacle,
                     self.OBSTACLE_SPAWN_X,
-                    GROUND_HEIGHT + 20,
+                    self.GROUND_HEIGHT + 20,
                     self.OBSTACLE_SPEED,
                 )
             )
+
+
+class Game:
+    def __init__(
+        self,
+        screen: pygame.surface.Surface,
+        background: pygame.surface.Surface,
+        font: pygame.font.Font,
+        ground_height: int = 330,
+    ) -> None:
+        self.sky = background
+        self.font = font
+        self.GROUND_HEIGHT = ground_height
+
+        self.obstacleHandler = ObstacleHandler(self.GROUND_HEIGHT)
+        self.characterGroup = pygame.sprite.GroupSingle()
+        self.player = Player(
+            80, self.GROUND_HEIGHT + 20, pygame.time.get_ticks()
+        )
+        self.characterGroup.add(self.player)
+
+    def run(self) -> int:
+        while self.player.player_alive:
+            clock.tick(FPS)
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    return self.player.score
+
+            if pygame.sprite.spritecollide(
+                self.player,
+                self.obstacleHandler.obstacles,
+                False,
+                pygame.sprite.collide_mask,  # type: ignore
+            ):
+                self.player.gameOver()
+
+            screen.blit(sky, (0, 0))
+
+            if self.player.player_alive:
+                # screen.blit(ground, (0, GROUND_HEIGHT))
+                self.characterGroup.draw(screen)
+                self.characterGroup.update()
+                self.obstacleHandler.generate()
+                self.obstacleHandler.obstacles.draw(screen)
+                self.obstacleHandler.obstacles.update()
+                score_rect = font.render(
+                    f"Score: {self.player.score}",
+                    False,
+                    "Red",
+                )
+                screen.blit(
+                    score_rect, score_rect.get_rect(topright=(WIDTH - 10, 10))
+                )
+            # obstacle.tick(screen)
+            pygame.display.update()
+        return self.player.score
 
 
 # Assets
@@ -200,44 +256,10 @@ sky = pygame.transform.scale(
 )
 font = pygame.font.Font(None, 30)
 
+game = Game(screen=screen, background=sky, font=font)
 
-GROUND_HEIGHT = 330
-obstacleHandler = ObstacleHandler()
-characterGroup = pygame.sprite.GroupSingle()
-player = Player(80, GROUND_HEIGHT + 20, pygame.time.get_ticks())
-characterGroup.add(player)
-# highest = 900
-# lowest = 0
+score = game.run()
 
-run = True
-while run:
-    clock.tick(FPS)
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            run = False
-            exit()
-
-    if pygame.sprite.spritecollide(
-        player, obstacleHandler.obstacles, False, pygame.sprite.collide_mask
-    ):
-        player.gameOver()
-    if player.player_alive:
-        screen.blit(sky, (0, 0))
-        # screen.blit(ground, (0, GROUND_HEIGHT))
-        characterGroup.draw(screen)
-        characterGroup.update()
-        obstacleHandler.generate()
-        obstacleHandler.obstacles.draw(screen)
-        obstacleHandler.obstacles.update()
-        # lowest = player.position.y if player.position.y > lowest else lowest
-        # highest = player.position.y if player.position.y < highest else highest
-        score_rect = font.render(
-            f"Score: {player.score}",
-            False,
-            "Red",
-        )
-        screen.blit(score_rect, score_rect.get_rect(topright=(WIDTH - 10, 10)))
-    # obstacle.tick(screen)
-    pygame.display.update()
+print(score)
 
 pygame.quit()
