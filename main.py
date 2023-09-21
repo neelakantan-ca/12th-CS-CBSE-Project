@@ -14,6 +14,7 @@ import pygame
 import math
 import os
 import random
+import neat
 
 # ╔──────────────────────────────────────────────────────────╗
 # │   ____                        ____       _               │
@@ -38,9 +39,6 @@ clock = pygame.time.Clock()
 # Setup the game window
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("AI Dino Run")
-
-# Set keys to repeat after 1s of holding
-pygame.key.set_repeat(100)
 
 
 # ╔──────────────────────────────────────────────────────────────╗
@@ -79,12 +77,12 @@ class Player(pygame.sprite.Sprite):
 
     """
 
-    JUMP_HEIGHT = 125
-    GRAVITY = 0.7
+    JUMP_HEIGHT = 100
+    GRAVITY = 0.4
     TIME_OF_JUMP = math.sqrt((2 * JUMP_HEIGHT) / GRAVITY)
     JUMP_VELOCITY = GRAVITY * TIME_OF_JUMP
     ASSETS_FOLDER = "./Assets/Player"
-    ANIMATION_SPEED = 0.15
+    ANIMATION_SPEED = 0.17
     PLAYER_SCALE = 1.7
 
     # Player Assets
@@ -95,7 +93,9 @@ class Player(pygame.sprite.Sprite):
 
     score = 0
 
-    def __init__(self, x: int, y: int, start_tick: int) -> None:
+    def __init__(
+        self, x: int, y: int, start_tick: int, obstacle_handler
+    ) -> None:
         """__init__ Creates an instance of a player.
 
         Parameters
@@ -109,7 +109,6 @@ class Player(pygame.sprite.Sprite):
             (Scoring begins from this time)
 
         """
-
         super().__init__()
 
         # Load character sprites from ASSETS folder
@@ -154,6 +153,7 @@ class Player(pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.image)
         # Set the location of player's sprite at the provided coordinates
         self.rect = self.image.get_rect(midbottom=(x, y))
+        self.obstacle_handler = obstacle_handler
 
     def on_ground(self) -> bool:
         """on_ground Determines whether the player is on the ground.
@@ -382,7 +382,7 @@ class ObstacleHandler:
     OFFSET = 50
     OBSTACLE_SPAWN_PERCENTAGE = 0.97
 
-    def __init__(self, ground_height: int):
+    def __init__(self):
         """__init__ This function is used to create a handler for all obstacles
 
 
@@ -403,7 +403,19 @@ class ObstacleHandler:
             )
             self.sprites.append(img)
         self.obstacles = pygame.sprite.Group()
+
+    def set_ground_height(self, ground_height) -> None:
         self.GROUND_HEIGHT = ground_height
+
+    def get_closest(self) -> int:
+        closest = self.OBSTACLE_SPAWN_X
+        for obstacle in self.obstacles.sprites():
+            if (
+                closest > obstacle.rect.bottomleft[0] - 80
+                and obstacle.rect.bottomleft[0] > 80
+            ):
+                closest = obstacle.rect.bottomleft[0] - 80
+        return closest
 
     def generate(self) -> None:
         """generate is called to create a new obstacle.
@@ -417,11 +429,8 @@ class ObstacleHandler:
         air_time = Player.TIME_OF_JUMP
         furthest_distance = 0
         for obstacle in self.obstacles.sprites():
-            furthest_distance = (
-                obstacle.x
-                if furthest_distance < obstacle.x
-                else furthest_distance
-            )
+            if furthest_distance < obstacle.x:
+                furthest_distance = obstacle.x
         obstacle = random.choice(self.sprites)
         gap_between_obstacles = self.OBSTACLE_SPAWN_X - furthest_distance
         distance_traveled_in_air = (
@@ -455,12 +464,16 @@ class Game:
     This class handles running one instance of a game.
     """
 
+    sky = pygame.transform.scale(
+        pygame.image.load("Assets/desert_BG.png"), (800, 400)
+    )
+    font = pygame.font.Font(None, 30)
+
     def __init__(
         self,
         screen: pygame.surface.Surface,
-        background: pygame.surface.Surface,
-        font: pygame.font.Font,
-        ground_height: int = 330,
+        player: List[Player],
+        obstacleHandler: ObstacleHandler,
     ) -> None:
         """__init__ Used to create a game instance
 
@@ -478,18 +491,15 @@ class Game:
             The height at which the ground should be rendered, by default 330
         """
 
-        self.sky = background
-        self.font = font
-        self.GROUND_HEIGHT = ground_height
+        self.GROUND_HEIGHT = player[0].GROUND_HEIGHT - 20
         self.screen = screen
-        self.obstacleHandler = ObstacleHandler(self.GROUND_HEIGHT)
-        self.characterGroup = pygame.sprite.GroupSingle()
-        self.player = Player(
-            80, self.GROUND_HEIGHT + 20, pygame.time.get_ticks()
-        )
-        self.characterGroup.add(self.player)
+        self.obstacleHandler = obstacleHandler
+        self.obstacleHandler.set_ground_height(self.GROUND_HEIGHT)
+        self.characterGroup = pygame.sprite.Group()
+        self.players = player
+        self.characterGroup.add(self.players)
 
-    def run(self) -> int:
+    def run_multiple(self):
         """run runs the game
 
         This function starts a blocking game loop that terminates when the
@@ -500,41 +510,43 @@ class Game:
         int
             The score of the player is returned to the calling class.
         """
-
-        while self.player._is_alive:
+        pygame.key.set_repeat(100)
+        alive = list(self.players)
+        dead = []
+        while len(alive) > 0:
             clock.tick(FPS)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    return self.player.score
-
-            if pygame.sprite.spritecollide(
-                self.player,
-                self.obstacleHandler.obstacles,
-                False,
-                pygame.sprite.collide_mask,  # type: ignore
-            ):
-                self.player.game_over()
-
-            self.screen.blit(sky, (0, 0))
-
-            if not (self.player._is_alive):
-                break
-            self.characterGroup.draw(self.screen)
+                    return [player.score for player in self.players]
+            for i, player in enumerate(alive):
+                if pygame.sprite.spritecollide(
+                    player,
+                    self.obstacleHandler.obstacles,
+                    False,
+                    pygame.sprite.collide_mask,  # type: ignore
+                ):
+                    player.game_over()
+                    self.characterGroup.remove(player)
+                    dead.append(alive.pop(i))
             self.characterGroup.update()
             self.obstacleHandler.generate()
-            self.obstacleHandler.obstacles.draw(self.screen)
             self.obstacleHandler.obstacles.update()
-            score_rect = self.font.render(
-                f"Score: {self.player.score}",
-                False,
-                "Red",
-            )
-            self.screen.blit(
-                score_rect, score_rect.get_rect(topright=(WIDTH - 10, 10))
-            )
-            # obstacle.tick(screen)
+            scores = [player.score for player in alive]
+            if self.screen is not None:
+                self.screen.blit(self.sky, (0, 0))
+                self.characterGroup.draw(self.screen)
+                self.obstacleHandler.obstacles.draw(self.screen)
+                score_rect = self.font.render(
+                    f"Score: {scores[0] if len(scores) > 0 else 0}",
+                    False,
+                    "Red",
+                )
+                self.screen.blit(
+                    score_rect, score_rect.get_rect(topright=(WIDTH - 10, 10))
+                )
             pygame.display.update()
-        return self.player.score
+        pygame.key.set_repeat(0)
+        return [player.score for player in self.players]
 
     def scoreboard(self, scores: List[tuple[str, int]]):
         """scoreboard displays the scoreboard
@@ -552,7 +564,7 @@ class Game:
         background = pygame.image.load("Assets/scoreboard.png")
         text_x: int = 245
         score_rects = [
-            font.render(f"{score[0]} - {score[1]}", True, "Red")
+            self.font.render(f"{score[0]} - {score[1]}", True, "Red")
             for score in scores
         ]
 
@@ -586,19 +598,84 @@ class Game:
             pygame.display.update()
 
 
-# Assets
-# ground = pygame.image.load("Assets/ground.png")
-sky = pygame.transform.scale(
-    pygame.image.load("Assets/desert_BG.png"), (800, 400)
+class AI(Player):
+    def __init__(
+        self,
+        x: int,
+        y: int,
+        start_tick: int,
+        obstacle_handler: ObstacleHandler,
+        genome,
+        config: str,
+    ):
+        super().__init__(x, y, start_tick, obstacle_handler)
+        self.genome = genome
+        self.net = neat.nn.FeedForwardNetwork.create(genome, config)
+        genome.fitness = 0
+
+    def handle_input(self) -> None:
+        inputs = (self.position.y, self.obstacle_handler.get_closest(), FPS)
+        # print(inputs[1])
+        if self.net.activate((inputs))[0] > 0.5:
+            self.jump()
+
+    def calculate_score(self) -> None:
+        super()._calculate_score()
+        self.genome.fitness = self.score
+
+
+class NeatHelper:
+    def __init__(self, path: str) -> None:
+        self.config = neat.Config(
+            neat.DefaultGenome,
+            neat.DefaultReproduction,
+            neat.DefaultSpeciesSet,
+            neat.DefaultStagnation,
+            path,
+        )
+
+    def train(self):
+        self.population = neat.Population(self.config)
+        self.population.add_reporter(neat.StdOutReporter(True))
+        self.population.add_reporter(neat.StatisticsReporter())
+
+        return self.population.run(self.fitness, 200)
+
+    def fitness(self, genomes, config):
+        runners = []
+        obstacleHandler = ObstacleHandler()
+        for _, genome in genomes:
+            runners.append(
+                AI(
+                    80,
+                    350,
+                    pygame.time.get_ticks(),
+                    obstacleHandler,
+                    genome,
+                    config,
+                )
+            )
+        game = Game(screen, runners, obstacleHandler)
+        game.run_multiple()
+
+
+ai_helper = NeatHelper("./neat_config")
+
+ai_helper.train()
+
+"""
+obstacleHandler = ObstacleHandler()
+
+game = Game(
+    screen=screen,
+    player=[Player(80, 330 + 20, pygame.time.get_ticks(), obstacleHandler)],
+    obstacleHandler=obstacleHandler,
 )
-font = pygame.font.Font(None, 30)
 
-game = Game(screen=screen, background=sky, font=font)
-
-score = game.run()
+score = game.run_multiple()
 
 print(score)
-
-game.scoreboard([("Name " + str(i), 500) for i in range(1, 20)])
+"""
+# game.scoreboard([("Name " + str(i), 500) for i in range(1, 20)])
 
 pygame.quit()
