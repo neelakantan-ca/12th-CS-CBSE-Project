@@ -545,7 +545,6 @@ class Game:
                     score_rect, score_rect.get_rect(topright=(WIDTH - 10, 10))
                 )
             pygame.display.update()
-        pygame.key.set_repeat(0)
         return [player.score for player in self.players]
 
     def scoreboard(self, scores: List[tuple[str, int]]):
