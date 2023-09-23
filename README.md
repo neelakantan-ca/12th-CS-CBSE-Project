@@ -18,7 +18,7 @@ The game implemented in our project is a simplified version of the infamous Chro
 
 # Project Members
 
-- [@Reith77](https://blog.techbits.tk)
+- [@Reith77](https://blog.reith77.tk)
 - [@Jai Abhishek](https://github.com/Jai-Abhishek)
 - [@Harsha Vardhan](https://github.com/Blackdevil4506)
 
