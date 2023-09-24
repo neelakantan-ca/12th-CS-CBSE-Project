@@ -1,23 +1,49 @@
-def f(databasename, tablename, username, password, tuple):
-    import mysql.connector as s
+def create_table(database_name, table_name, username, password):
+    """create_table Creates a database and table if not already existing
+
+    The function creates a table to keep track of player scores for the game.
+
+
+    Parameters
+    ----------
+    database_name : str
+        The name of the database to create
+    table_name : str
+        The name of the table to create
+    username : str
+        Username to connect to database
+    password : str
+        Password to connect to database
+    """
+
+    from mysql import connector
 
     try:
-        m = s.connect(
-            host="localhost",
-            username="root",
-            password="Harshan@4506",
-            database="{}",
-        ).format(databasename)
-    except Exception:
-        m = s.connect(
-            host="localhost", username="root", password="Harshan@4506"
+        # Connect to database using provided login credentials
+        connection = connector.connect(
+            host="localhost", username=username, password=password
         )
-        w = m.cursor()
-        w.execute('create database "{}"').format(databasename)
-    w.execute("use databasename")
-    w.execute("show tables")
-    q = w.fetchall()
-    if tablename not in q:
-        w.execute(
-            'create table "{}"(Id varchar(50),Player_Name varchar(50),Score int'
-        ).format(tablename)
+        cursor = connection.cursor()
+        # Query available databases
+        cursor.execute("SHOW DATABASES")
+        # Convert multiple tuple rows into single list of databases
+        databases = [row[0] for row in cursor.fetchall()]
+        # Check if required database is present
+        # If not create the database
+        if database_name not in databases:
+            cursor.execute(f"CREATE DATABASE {database_name}")
+        # Open the required database
+        cursor.execute(f"USE {database_name}")
+        # Query available tables
+        cursor.execute("SHOW TABLES")
+        # Convert multiple tuples into single list of tables
+        tables = [row[0] for row in cursor.fetchall()]
+        # Check if required table is present
+        # If not create the table
+        if table_name not in tables:
+            cursor.execute(
+                f"CREATE TABLE {table_name} (id int NOT NULL \
+AUTO_INCREMENT PRIMARY KEY, name VARCHAR(25), score INT)"
+            )
+    except Exception as e:
+        print(e)
