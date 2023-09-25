@@ -62,3 +62,4 @@ def insertData(username, password, table_name, data, database_name):
         cursor.execute(f"insert into {table_name} values('{data[0]}','{data[1]}')")
     except Exception as e:
         print(e)
+def
