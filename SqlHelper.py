@@ -50,6 +50,7 @@ AUTO_INCREMENT PRIMARY KEY, name VARCHAR(25), score INT)"
             )
     except Exception as e:
         print(e)
+import mysqlx
 def insertData(username, password, table_name, data, database_name):
     # Importing mysql connector
     from mysql import connector
@@ -62,4 +63,16 @@ def insertData(username, password, table_name, data, database_name):
         cursor.execute(f"insert into {table_name} values('{data[0]}','{data[1]}')")
     except Exception as e:
         print(e)
-def
+import mysqlx
+def top_five_scores(username, password, table_name, database_name):
+    # Importing sql connector
+    from mysql import connector
+    try:
+        # Connecting to the database
+        connection=connector.connect(host='localhost',username=username,password=password,database=database_name)
+        # Creating cursor object
+        cursor=connection.cursor()
+        # Query for top 5 scores
+        cursor.execute(f'select * from {table_name} order by score desc limit 5')
+    except Exception as e:
+        print(e)
