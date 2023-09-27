@@ -1,6 +1,3 @@
-import mysqlx
-
-
 def create_table(database_name, table_name, username, password):
     """create_table Creates a database and table if not already existing
 
@@ -50,42 +47,90 @@ AUTO_INCREMENT PRIMARY KEY, name VARCHAR(25), score INT)"
             )
     except Exception as e:
         print(e)
-import mysqlx
+
+
 def insertData(username, password, table_name, data, database_name):
     # Importing mysql connector
     from mysql import connector
+
     try:
         # Connecting databases of players
-        connection=connector.connect(host='localhost',username=username,password=password,database=database_name)
+        connection = connector.connect(
+            host="localhost",
+            username=username,
+            password=password,
+            database=database_name,
+        )
         # Establishing a cursor for the above connection
-        cursor=connection.cursor()  
-        # Inserting data into the table using the above established cursor   
-        cursor.execute(f"insert into {table_name} values('{data[0]}','{data[1]}')")
+        cursor = connection.cursor()
+        # Inserting data into the table using the above established cursor
+        cursor.execute(
+            f"insert into {table_name} values('{data[0]}','{data[1]}')"
+        )
     except Exception as e:
         print(e)
-import mysqlx
+
+
 def top_five_scores(username, password, table_name, database_name):
     # Importing sql connector
     from mysql import connector
+
     try:
         # Connecting to the database
-        connection=connector.connect(host='localhost',username=username,password=password,database=database_name)
+        connection = connector.connect(
+            host="localhost",
+            username=username,
+            password=password,
+            database=database_name,
+        )
         # Creating cursor object
-        cursor=connection.cursor()
+        cursor = connection.cursor()
         # Query for top 5 scores
-        cursor.execute(f'select * from {table_name} order by score desc limit 5')
+        cursor.execute(
+            f"select * from {table_name} order by score desc limit 5"
+        )
     except Exception as e:
         print(e)
-import mysqlx
+
+
 def delete_scores(username, password, table_name, database_name):
     # Importing sql connector
     from mysql import connector
+
     try:
         # Connecting to the database
-        connection=connector.connect(host='localhost',username=username,password=password,database=database_name)
+        connection = connector.connect(
+            host="localhost",
+            username=username,
+            password=password,
+            database=database_name,
+        )
         # Creating cursor object
-        cursor=connection.cursor()
+        cursor = connection.cursor()
         # Query to delete all scores
         cursor.execute(f"drop table {table_name}")
+    except Exception as e:
+        print(e)
+
+
+def get_score(username, password, table_name, database_name):
+    # Importing sql connector
+    from mysql import connector
+
+    try:
+        # Connecting to the database
+        connection = connector.connect(
+            host="localhost",
+            username=username,
+            password=password,
+            database=database_name,
+        )
+        # Creating cursor object
+        cursor = connection.cursor()
+        # Getting Score from table using username
+        score = cursor.execute(
+            f"SELECT SCORE FROM {table_name} WHERE name={username}"
+        )
+        return score
     except Exception as e:
         print(e)
