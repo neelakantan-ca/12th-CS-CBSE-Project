@@ -134,3 +134,25 @@ def get_score(username, password, table_name, database_name):
         return score
     except Exception as e:
         print(e)
+
+
+def get_score(username, password, table_name, database_name):
+    # Importing sql connector
+    from mysql import connector
+
+    try:
+        # Connecting to the database
+        connection = connector.connect(
+            host="localhost",
+            username=username,
+            password=password,
+            database=database_name,
+        )
+        # Creating cursor object
+        cursor = connection.cursor()
+        # Getting Score from table using username
+        score = cursor.execute(
+            f"SELECT SCORE FROM {table_name} WHERE name={username}"
+        )
+    except Exception as e:
+        print(e)
