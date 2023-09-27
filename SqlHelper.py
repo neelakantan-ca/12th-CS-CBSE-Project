@@ -76,3 +76,16 @@ def top_five_scores(username, password, table_name, database_name):
         cursor.execute(f'select * from {table_name} order by score desc limit 5')
     except Exception as e:
         print(e)
+import mysqlx
+def delete_scores(username, password, table_name, database_name):
+    # Importing sql connector
+    from mysql import connector
+    try:
+        # Connecting to the database
+        connection=connector.connect(host='localhost',username=username,password=password,database=database_name)
+        # Creating cursor object
+        cursor=connection.cursor()
+        # Query to delete all scores
+        cursor.execute(f"drop table {table_name}")
+    except Exception as e:
+        print(e)
