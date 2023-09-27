@@ -1,3 +1,6 @@
+import mysql
+
+
 def create_table(database_name, table_name, username, password):
     """create_table Creates a database and table if not already existing
 
