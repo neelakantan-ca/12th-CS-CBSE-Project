@@ -129,14 +129,14 @@ def get_score(username, password, table_name, database_name):
         cursor = connection.cursor()
         # Getting Score from table using username
         score = cursor.execute(
-            f"SELECT SCORE FROM {table_name} WHERE name={username}"
+            f"SELECT score FROM {table_name} WHERE name={username}"
         )
         return score
     except Exception as e:
         print(e)
 
 
-def get_score(username, password, table_name, database_name):
+def greater_score_count(username, password, table_name, database_name, score):
     # Importing sql connector
     from mysql import connector
 
@@ -150,9 +150,10 @@ def get_score(username, password, table_name, database_name):
         )
         # Creating cursor object
         cursor = connection.cursor()
-        # Getting Score from table using username
-        score = cursor.execute(
-            f"SELECT SCORE FROM {table_name} WHERE name={username}"
+        # Getting number of score greater than given score
+        scoregreatercount = cursor.execute(
+            f"SELECT COUNT(score) FROM {table_name} WHERE score>{score}"
         )
+        return scoregreatercount
     except Exception as e:
         print(e)
