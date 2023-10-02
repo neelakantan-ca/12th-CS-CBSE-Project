@@ -612,13 +612,13 @@ class AI(Player):
         self.net = neat.nn.FeedForwardNetwork.create(genome, config)
         genome.fitness = 0
 
-    def handle_input(self) -> None:
+    def _handle_input(self) -> None:
         inputs = (self.position.y, self.obstacle_handler.get_closest(), FPS)
         # print(inputs[1])
         if self.net.activate((inputs))[0] > 0.5:
             self.jump()
 
-    def calculate_score(self) -> None:
+    def _calculate_score(self) -> None:
         super()._calculate_score()
         self.genome.fitness = self.score
 
