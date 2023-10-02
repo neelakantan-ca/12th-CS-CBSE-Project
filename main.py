@@ -9,7 +9,7 @@
 # Authors: Neelakantan C.A
 # Version: 1.0.0
 
-from typing import Any
+from typing import Any, List
 import pygame
 import math
 import os
@@ -480,7 +480,7 @@ class Game:
         self.sky = background
         self.font = font
         self.GROUND_HEIGHT = ground_height
-
+        self.screen = screen
         self.obstacleHandler = ObstacleHandler(self.GROUND_HEIGHT)
         self.characterGroup = pygame.sprite.GroupSingle()
         self.player = Player(
@@ -514,26 +514,75 @@ class Game:
             ):
                 self.player.game_over()
 
-            screen.blit(sky, (0, 0))
+            self.screen.blit(sky, (0, 0))
 
             if not (self.player._is_alive):
                 break
-            self.characterGroup.draw(screen)
+            self.characterGroup.draw(self.screen)
             self.characterGroup.update()
             self.obstacleHandler.generate()
-            self.obstacleHandler.obstacles.draw(screen)
+            self.obstacleHandler.obstacles.draw(self.screen)
             self.obstacleHandler.obstacles.update()
-            score_rect = font.render(
+            score_rect = self.font.render(
                 f"Score: {self.player.score}",
                 False,
                 "Red",
             )
-            screen.blit(
+            self.screen.blit(
                 score_rect, score_rect.get_rect(topright=(WIDTH - 10, 10))
             )
             # obstacle.tick(screen)
             pygame.display.update()
         return self.player.score
+
+    def scoreboard(self, scores: List[tuple[str, int]]):
+        """scoreboard displays the scoreboard
+
+        Displays the scoreboard on the screen provided to the `game` class
+
+        Parameters
+        ----------
+        scores : List[tuple[str, int]]
+            A list of tuples in the format `(name, score)` retrieved from
+            database
+        """
+
+        index = 0
+        background = pygame.image.load("Assets/scoreboard.png")
+        text_x: int = 245
+        score_rects = [
+            font.render(f"{score[0]} - {score[1]}", True, "Red")
+            for score in scores
+        ]
+
+        while True:
+            text_y: int = 135
+            for event in pygame.event.get():
+                match event.type:
+                    case pygame.QUIT:
+                        return
+                    case pygame.MOUSEBUTTONDOWN:
+                        x, y = pygame.mouse.get_pos()
+                        if (10 <= x <= 66) and (340 <= y <= 383):
+                            if 0 <= index - 4:
+                                index -= 4
+                        elif (10 <= x <= 66) and (25 <= y <= 68):
+                            print("Return to main menu")
+                        elif (730 <= x <= 785) and (340 <= y <= 383):
+                            if index + 4 < len(score_rects):
+                                print("test")
+                                index += 4
+
+            clock.tick(FPS)
+            self.screen.blit(background, (0, 0))
+            scores_to_display = score_rects[index : index + 3]
+            for score_rect in scores_to_display:
+                self.screen.blit(
+                    score_rect,
+                    score_rect.get_rect(bottomleft=(text_x, text_y)),
+                )
+                text_y += 75
+            pygame.display.update()
 
 
 # Assets
@@ -548,5 +597,7 @@ game = Game(screen=screen, background=sky, font=font)
 score = game.run()
 
 print(score)
+
+game.scoreboard([("Name " + str(i), 500) for i in range(1, 20)])
 
 pygame.quit()
