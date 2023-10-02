@@ -9,13 +9,28 @@
 # Authors: Neelakantan C.A
 # Version: 1.0.0
 
-from typing import Any, List
-import pygame
-import math
 import os
+from typing import Any, List
+import math
 import random
 import neat
 import argparse
+
+parser = argparse.ArgumentParser(
+    description="A simple game", formatter_class=argparse.RawTextHelpFormatter
+)
+parser.add_argument(
+    "--type",
+    choices=["AI", "M"],
+    dest="mode",
+    help="Sets the play mode.\n\n\tM  - Manual Player Mode\n\tAI - \
+Artificial Intelligence",
+    required=True,
+)
+args = parser.parse_args()
+
+os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
+import pygame
 
 # ╔──────────────────────────────────────────────────────────╗
 # │   ____                        ____       _               │
@@ -658,19 +673,6 @@ class NeatHelper:
         game = Game(screen, runners, obstacleHandler)
         game.run_multiple()
 
-
-parser = argparse.ArgumentParser(
-    description="A simple game", formatter_class=argparse.RawTextHelpFormatter
-)
-parser.add_argument(
-    "--type",
-    choices=["AI", "M"],
-    dest="mode",
-    help="Sets the play mode.\n\n\tM  - Manual Player Mode\n\tAI - \
-Artificial Intelligence",
-    required=True,
-)
-args = parser.parse_args()
 
 if args.mode == "AI":
     ai_helper = NeatHelper("./neat_config")
