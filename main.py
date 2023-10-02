@@ -15,6 +15,7 @@ import math
 import os
 import random
 import neat
+import argparse
 
 # ╔──────────────────────────────────────────────────────────╗
 # │   ____                        ____       _               │
@@ -658,23 +659,38 @@ class NeatHelper:
         game.run_multiple()
 
 
-ai_helper = NeatHelper("./neat_config")
-
-ai_helper.train()
-
-"""
-obstacleHandler = ObstacleHandler()
-
-game = Game(
-    screen=screen,
-    player=[Player(80, 330 + 20, pygame.time.get_ticks(), obstacleHandler)],
-    obstacleHandler=obstacleHandler,
+parser = argparse.ArgumentParser(
+    description="A simple game", formatter_class=argparse.RawTextHelpFormatter
 )
+parser.add_argument(
+    "--type",
+    choices=["AI", "M"],
+    dest="mode",
+    help="Sets the play mode.\n\n\tM  - Manual Player Mode\n\tAI - \
+Artificial Intelligence",
+    required=True,
+)
+args = parser.parse_args()
 
-score = game.run_multiple()
+if args.mode == "AI":
+    ai_helper = NeatHelper("./neat_config")
 
-print(score)
-"""
-# game.scoreboard([("Name " + str(i), 500) for i in range(1, 20)])
+    ai_helper.train()
+elif args.mode == "M":
+    obstacleHandler = ObstacleHandler()
+
+    game = Game(
+        screen=screen,
+        player=[
+            Player(80, 330 + 20, pygame.time.get_ticks(), obstacleHandler)
+        ],
+        obstacleHandler=obstacleHandler,
+    )
+
+    score = game.run_multiple()
+
+    print(score)
+
+    game.scoreboard([("Name " + str(i), 500) for i in range(1, 20)])
 
 pygame.quit()
