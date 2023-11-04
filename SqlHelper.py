@@ -1,6 +1,3 @@
-import mysql
-
-
 def create_table(database_name, table_name, username, password):
     """create_table Creates a database and table if not already existing
 
@@ -68,8 +65,10 @@ def insertData(username, password, table_name, data, database_name):
         cursor = connection.cursor()
         # Inserting data into the table using the above established cursor
         cursor.execute(
-            f"insert into {table_name} values('{data[0]}','{data[1]}')"
+            f"insert into {table_name} (name, score) values('{data[0]}','{data[1]}')"
         )
+        connection.commit()
+        connection.close()
     except Exception as e:
         print(e)
 
@@ -90,8 +89,9 @@ def top_five_scores(username, password, table_name, database_name):
         cursor = connection.cursor()
         # Query for top 5 scores
         cursor.execute(
-            f"select * from {table_name} order by score desc limit 5"
+            f"select name,score from {table_name} order by score desc limit 5"
         )
+        return cursor.fetchall()
     except Exception as e:
         print(e)
 

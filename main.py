@@ -290,6 +290,7 @@ class Player(pygame.sprite.Sprite):
             self.move()
             self._handle_input()
             self._set_position()
+            self._calculate_score()
 
 
 # ╔───────────────────────────────────────╗
@@ -592,14 +593,14 @@ class Game:
                     case pygame.MOUSEBUTTONDOWN:
                         x, y = pygame.mouse.get_pos()
                         if (10 <= x <= 66) and (340 <= y <= 383):
-                            if 0 <= index - 4:
-                                index -= 4
+                            if 0 <= index - 3:
+                                index -= 3
                         elif (10 <= x <= 66) and (25 <= y <= 68):
                             print("Return to main menu")
                         elif (730 <= x <= 785) and (340 <= y <= 383):
-                            if index + 4 < len(score_rects):
+                            if index + 3 < len(score_rects):
                                 print("test")
-                                index += 4
+                                index += 3
 
             clock.tick(FPS)
             self.screen.blit(background, (0, 0))
