@@ -15,6 +15,7 @@ import math
 import random
 import neat
 import argparse
+from SqlHelper import create_table, insertData, top_five_scores
 
 parser = argparse.ArgumentParser(
     description="A simple game", formatter_class=argparse.RawTextHelpFormatter
@@ -43,6 +44,16 @@ import pygame
 
 # Initialize the game
 pygame.init()
+DB_NAME = "DINO_RUNNER"
+TB_NAME = "scores"
+username = "root"
+password = "redacted"
+create_table(
+    database_name=DB_NAME,
+    table_name=TB_NAME,
+    username=username,
+    password=password,
+)
 
 # Set Width, Height and FPS for Game Window
 WIDTH = 800
@@ -692,8 +703,21 @@ elif args.mode == "M":
 
     score = game.run_multiple()
 
-    print(score)
+    insertData(
+        username=username,
+        password=password,
+        table_name=TB_NAME,
+        data=("Player", score[0]),
+        database_name=DB_NAME,
+    )
 
-    game.scoreboard([("Name " + str(i), 500) for i in range(1, 20)])
+    scores = top_five_scores(
+        username=username,
+        password=password,
+        table_name=TB_NAME,
+        database_name=DB_NAME,
+    )
+    print(scores)
+    game.scoreboard(scores)  # type: ignore
 
 pygame.quit()
